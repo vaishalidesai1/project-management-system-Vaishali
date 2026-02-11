@@ -38,7 +38,7 @@ def create_project(body: ProjectCreate, service: ProjectService = Depends(get_pr
 @router.get('/projects', response_model=list[ProjectOut])
 def get_projects(service: ProjectService = Depends(get_project_service)):
     try:
-        projects = service.list_all()
+        projects = service.list()
         return [ProjectOut(id=project.id, name=project.name) for project in projects]
     except Exception as e:
         raise to_http(e)
@@ -47,9 +47,9 @@ def get_projects(service: ProjectService = Depends(get_project_service)):
 # TO-DO: GET /projects/{project_id}
 # @router.get('/projects/{project_id}', response_model=ProjectOut)
 @router.get('/projects/{project_id}', response_model=ProjectOut)
-def get_project(project_id: int, service: ProjectService = Depends(get_project_service)):
+def get_project(project_id: str, service: ProjectService = Depends(get_project_service)):
     try:
-        project = service.get_by_id(project_id)
+        project = service.get(project_id)
         return ProjectOut(id=project.id, name=project.name)
     except Exception as e:
         raise to_http(e)
@@ -58,12 +58,12 @@ def get_project(project_id: int, service: ProjectService = Depends(get_project_s
 # TO-DO POST /projects/{project_id}/tasks
 @router.post('/projects/{project_id}/tasks', response_model=TaskOut, status_code=201)
 def create_task(
-    project_id: int,
+    project_id: str,
     body: TaskCreate,
     service: TaskService = Depends(get_task_service)
 ):
     try:
-        task = service.create(project_id, body.title, body.description)
+        task = service.create_task(project_id, body.title, body.task_type, body.due_date)
         return TaskOut(
             id=task.id,
             project_id=task.project_id,
@@ -78,11 +78,11 @@ def create_task(
 # TO-DO GET /projects/{project_id}/tasks
 @router.get('/projects/{project_id}/tasks', response_model=list[TaskOut])
 def get_project_tasks(
-    project_id: int,
+    project_id: str,
     service: TaskService = Depends(get_task_service)
 ):
     try:
-        tasks = service.list_by_project(project_id)
+        tasks = service.list_tasks(project_id)
         return [
             TaskOut(
                 id=task.id,
@@ -100,10 +100,10 @@ def get_project_tasks(
 # TO-DO DELETE /tasks/{task_id}
 @router.delete('/tasks/{task_id}', status_code=204)
 def delete_task(
-    task_id: int,
+    task_id: str,
     service: TaskService = Depends(get_task_service)
 ):
     try:
-        service.delete(task_id)
+        service.delete_task(task_id)
     except Exception as e:
         raise to_http(e)
